@@ -478,7 +478,7 @@ function debtPaymentModal(id){
   let d=(data.debts||[]).find(x=>x.id===id);if(!d)return;
   modal("Record debt payment",'<p class="muted">This updates the debt balance and preserves a separate payment history.</p><label>Amount</label><input id="dpa" type="number" step="0.01"><label>Date</label><input id="dpd" type="date" value="'+new Date().toISOString().slice(0,10)+'"><label>Notes</label><input id="dpn">');
   $("save").onclick=async()=>{try{
-    let amount=Number($("dpa").value);if(!amount||amount<=0)throw new Error("Enter a payment greater than zero.");if(amount>Number(d.outstanding_amount||0))throw new Error("Payment cannot exceed the outstanding balance.");
+    let amount=Number($("dpa").value);if(!Number.isFinite(amount)||amount<=0)throw new Error("Enter a payment greater than zero.");if(!$("dpd").value)throw new Error("Select a payment date.");if(amount>Number(d.outstanding_amount||0))throw new Error("Payment cannot exceed the outstanding balance.");
     await api("debt_payments",{method:"POST",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify({debt_id:id,user_id:user.id,amount,payment_date:$("dpd").value,notes:$("dpn").value})});
     let remaining=Math.max(0,Number(d.outstanding_amount||0)-amount);
     await api("debts?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify({outstanding_amount:remaining})});
