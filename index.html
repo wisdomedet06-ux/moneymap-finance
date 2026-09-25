@@ -48,6 +48,7 @@ async function load(){
   data.recurring=await api("recurring_transactions?select=*&order=next_date.asc")||[];
   data.savings=await api("savings_records?select=*&order=created_at.desc")||[];
   data.savingsContributions=await api("savings_contributions?select=*&order=contribution_date.desc")||[];
+  data.debts=await api("debts?select=*&order=created_at.desc")||[];
   data.reportTransactions=await reportRange(3);
 }
 function saveSession(s){token=s.access_token;user=s.user;localStorage.setItem("moneymap_session",JSON.stringify(s))}
@@ -56,9 +57,9 @@ function auth(){
 return '<div class="auth"><div class="card"><div class="brand">Money<b>Map</b></div><h1>Welcome back</h1><p class="muted">Your private personal finance space.</p><form id="authform"><label>Email</label><input id="email" type="email" required><label>Password</label><input id="pass" type="password" minlength="6" required><button class="btn primary" style="width:100%;margin-top:18px">Sign in</button><div id="authmsg" class="muted msg"></div></form><button class="btn secondary" id="signup" style="width:100%;margin-top:10px">Create an account</button></div></div>';
 }
 function app(){
-return '<div class="layout"><aside class="side"><div class="brand" style="padding:8px 12px 20px">Money<b>Map</b></div><nav class="nav">'+["dashboard","accounts","transactions","categories","budgets","goals","savings","recurring","reports","data"].map(v=>'<button class="'+(view===v?"active":"")+'" onclick="go(&quot;'+v+'&quot;)">'+v[0].toUpperCase()+v.slice(1)+'</button>').join("")+'</nav><button class="btn secondary" style="margin:24px 12px;width:calc(100% - 24px)" onclick="logout()">Sign out</button></aside><main><div class="top"><div><div class="muted">'+greet()+'</div><h1>'+esc(user?.user_metadata?.full_name||"Christy")+'</h1></div><div><button class="btn secondary" onclick="changeMonth(-1)">‹</button> <b>'+month.toLocaleString("en-US",{month:"long",year:"numeric"})+'</b> <button class="btn secondary" onclick="changeMonth(1)">›</button></div></div>'+page()+'</main></div>';
+return '<div class="layout"><aside class="side"><div class="brand" style="padding:8px 12px 20px">Money<b>Map</b></div><nav class="nav">'+["dashboard","accounts","transactions","categories","budgets","goals","savings","debts","recurring","reports","data"].map(v=>'<button class="'+(view===v?"active":"")+'" onclick="go(&quot;'+v+'&quot;)">'+v[0].toUpperCase()+v.slice(1)+'</button>').join("")+'</nav><button class="btn secondary" style="margin:24px 12px;width:calc(100% - 24px)" onclick="logout()">Sign out</button></aside><main><div class="top"><div><div class="muted">'+greet()+'</div><h1>'+esc(user?.user_metadata?.full_name||"Christy")+'</h1></div><div><button class="btn secondary" onclick="changeMonth(-1)">‹</button> <b>'+month.toLocaleString("en-US",{month:"long",year:"numeric"})+'</b> <button class="btn secondary" onclick="changeMonth(1)">›</button></div></div>'+page()+'</main></div>';
 }
-function page(){if(view==="dashboard")return dashboard();if(view==="accounts")return accounts();if(view==="transactions")return transactions();if(view==="categories")return categories();if(view==="budgets")return budgets();if(view==="goals")return goals();if(view==="savings")return savings();if(view==="recurring")return recurring();if(view==="reports")return reports();return dataPage()}
+function page(){if(view==="dashboard")return dashboard();if(view==="accounts")return accounts();if(view==="transactions")return transactions();if(view==="categories")return categories();if(view==="budgets")return budgets();if(view==="goals")return goals();if(view==="savings")return savings();if(view==="debts")return debts();if(view==="recurring")return recurring();if(view==="reports")return reports();return dataPage()}
 function sum(type){return data.transactions.filter(t=>t.transaction_type===type&&t.status==="approved").reduce((a,t)=>a+Number(t.amount||0),0)}
 function metric(a,b){return '<section class="card metric"><span class="muted">'+a+'</span><strong>'+b+'</strong></section>'}
 function accountName(id){return data.accounts.find(a=>a.id===id)?.name||"Account"}
@@ -80,6 +81,14 @@ function savings(){
   }
   return '<div class="top"><div><h1>Savings</h1><div class="muted">Track savings separately from ordinary leftover cash and preserve contribution history.</div></div><button class="btn primary" onclick="savingsModal()">Add savings goal</button></div>'+(active.length?active.map(row).join(""):'<section class="card"><p class="muted">No savings goals yet. Add one to start tracking a target and its contributions.</p></section>');
 }
+function debts(){
+  let active=data.debts||[];
+  function row(d){
+    let original=Number(d.original_amount||0),out=Number(d.outstanding_amount||0),paid=Math.max(0,original-out),pct=original?Math.min(100,paid/original*100):0;
+    return '<div class="card" style="padding:20px"><div class="row" style="padding-top:0"><div><h3 style="margin:0">'+esc(d.name)+'</h3><div class="muted">Monthly payment '+money(d.monthly_payment||0)+'</div></div><div><b>'+money(out)+'</b><div class="muted">Outstanding</div></div></div><div class="progress"><i style="width:'+pct+'%"></i></div><div class="muted" style="margin-top:7px">'+Math.round(pct)+'% paid down</div><div class="actions"><button class="btn primary" onclick="debtPaymentModal(&quot;'+d.id+'&quot;)">Record payment</button><button class="btn secondary" onclick="debtModal(&quot;'+d.id+'&quot;)">Edit</button></div></div>';
+  }
+  return '<div class="top"><div><h1>Debts</h1><div class="muted">Track outstanding balances and preserve payment history.</div></div><button class="btn primary" onclick="debtModal()">Add debt</button></div>'+(active.length?active.map(row).join(""):'<section class="card"><p class="muted">No debts recorded yet.</p></section>');
+}
 function recurring(){
   let active=data.recurring.filter(r=>r.active!==false);
   let inactive=data.recurring.filter(r=>r.active===false);
@@ -99,7 +108,7 @@ function csvCell(v){let s=String(v??"");return /[",\n\r]/.test(s)?'"'+s.replace(
 function downloadFile(name,content,type){let blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function fetchAll(table){let rows=[],offset=0,limit=1000;while(true){let batch=await api(table+"?select=*&limit="+limit+"&offset="+offset);if(!Array.isArray(batch)||!batch.length)break;rows=rows.concat(batch);if(batch.length<limit)break;offset+=limit}return rows}
 async function exportTransactionsCsv(){try{let rows=await fetchAll("transactions"),cols=["id","transaction_date","transaction_type","amount","currency","account_id","category_id","transfer_account_id","transfer_direction","description","notes","status","created_at","updated_at"],csv=[cols.join(",")].concat(rows.map(r=>cols.map(k=>csvCell(r[k])).join(","))).join("\n");downloadFile("moneymap-transactions-"+new Date().toISOString().slice(0,10)+".csv",csv,"text/csv;charset=utf-8");}catch(e){alert("Could not export transactions: "+e.message)}}
-async function exportBackup(){try{let tables=["profiles","accounts","categories","transactions","budgets","goals","goal_contributions","recurring_transactions","savings_records","savings_contributions","debts","investments","net_worth_snapshots"],backup={app:"MoneyMap",backup_version:1,exported_at:new Date().toISOString(),user_id:user.id};for(let table of tables)backup[table]=await fetchAll(table);downloadFile("moneymap-backup-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify(backup,null,2),"application/json;charset=utf-8");}catch(e){alert("Could not create backup: "+e.message)}}
+async function exportBackup(){try{let tables=["profiles","accounts","categories","transactions","budgets","goals","goal_contributions","recurring_transactions","savings_records","savings_contributions","debts","debt_payments","investments","net_worth_snapshots"],backup={app:"MoneyMap",backup_version:1,exported_at:new Date().toISOString(),user_id:user.id};for(let table of tables)backup[table]=await fetchAll(table);downloadFile("moneymap-backup-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify(backup,null,2),"application/json;charset=utf-8");}catch(e){alert("Could not create backup: "+e.message)}}
 function dataPage(){return '<div class="top"><div><h1>Data & Backup</h1><div class="muted">Keep a copy of your MoneyMap records and transaction history.</div></div></div><div class="grid2"><section class="card"><h2>Transaction CSV</h2><p class="muted">Export your complete transaction history as a CSV file for spreadsheets and analysis.</p><button class="btn primary" onclick="exportTransactionsCsv()">Export transactions CSV</button></section><section class="card"><h2>Full JSON backup</h2><p class="muted">Export your MoneyMap records, including accounts, categories, transactions, budgets, goals, savings records, debts, investments and net worth history.</p><button class="btn primary" onclick="exportBackup()">Download full backup</button></section></div><section class="card section"><h2>Your data</h2><div class="row"><span>Transactions</span><b>Complete history</b></div><div class="row"><span>Financial records</span><b>All available records</b></div><div class="row"><span>Account isolation</span><b>Private to your account</b></div></section>'}
 function budgetSummary(){return data.budgets.length?data.budgets.map(b=>'<div class="row"><span>'+esc(categoryName(b.category_id))+'</span><b>'+money(b.amount)+'</b></div>').join(""):'<p class="muted">No budgets set for this month.</p>'}
 function goalSummary(){return data.goals.length?data.goals.slice(0,5).map(g=>'<div class="row"><span>'+esc(g.name)+'</span><b>'+money(g.current_amount)+' / '+money(g.target_amount)+'</b></div>').join(""):'<p class="muted">Create a goal to start tracking progress.</p>'}
@@ -139,6 +148,29 @@ function contributionModal(id){
 }
 async function toggleSavings(id){
   try{await api("savings_records?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify({status:"archived"})});await load();render()}catch(e){alert(e.message)}
+}
+function debtModal(id){
+  let d=id?(data.debts||[]).find(x=>x.id===id):null;
+  modal(id?"Edit debt":"Add debt",'<label>Name</label><input id="dn" value="'+esc(d?.name||"")+'"><label>Original amount</label><input id="do" type="number" step="0.01" value="'+(d?.original_amount??"")+'"><label>Outstanding amount</label><input id="du" type="number" step="0.01" value="'+(d?.outstanding_amount??"")+'"><label>Monthly payment</label><input id="dp" type="number" step="0.01" value="'+(d?.monthly_payment??"")+'">');
+  $("save").onclick=async()=>{try{
+    let name=$("dn").value.trim(),original=Number($("do").value),out=Number($("du").value);
+    if(!name)throw new Error("Enter a debt name.");if(original<0||out<0)throw new Error("Amounts cannot be negative.");if(out>original)throw new Error("Outstanding amount cannot exceed the original amount.");
+    let payload={name,original_amount:original,outstanding_amount:out,monthly_payment:Number($("dp").value||0)};
+    if(id)await api("debts?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify(payload)});
+    else{payload.user_id=user.id;await api("debts",{method:"POST",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify(payload)})}
+    closeModal();await load();render();
+  }catch(e){alert(e.message)}}
+}
+function debtPaymentModal(id){
+  let d=(data.debts||[]).find(x=>x.id===id);if(!d)return;
+  modal("Record debt payment",'<p class="muted">This updates the debt balance and preserves a separate payment history.</p><label>Amount</label><input id="dpa" type="number" step="0.01"><label>Date</label><input id="dpd" type="date" value="'+new Date().toISOString().slice(0,10)+'"><label>Notes</label><input id="dpn">');
+  $("save").onclick=async()=>{try{
+    let amount=Number($("dpa").value);if(!amount||amount<=0)throw new Error("Enter a payment greater than zero.");if(amount>Number(d.outstanding_amount||0))throw new Error("Payment cannot exceed the outstanding balance.");
+    await api("debt_payments",{method:"POST",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify({debt_id:id,user_id:user.id,amount,payment_date:$("dpd").value,notes:$("dpn").value})});
+    let remaining=Math.max(0,Number(d.outstanding_amount||0)-amount);
+    await api("debts?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify({outstanding_amount:remaining})});
+    closeModal();await load();render();
+  }catch(e){alert(e.message)}}
 }
 function recurringModal(id){
   let r=id?data.recurring.find(x=>x.id===id):null;
