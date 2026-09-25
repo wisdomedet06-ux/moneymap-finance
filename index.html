@@ -429,6 +429,7 @@ async function changeMonth(n){month=new Date(month.getFullYear(),month.getMonth(
 async function logout(){clearSession();render()}
 function render(){root.innerHTML=user?app():auth();if(!user){$("authform").onsubmit=async e=>{e.preventDefault();$("authmsg").textContent="Signing in...";try{let s=await authApi("token?grant_type=password",{email:$("email").value,password:$("pass").value});saveSession(s);await load();render()}catch(err){$("authmsg").textContent=err.message}};$("signup").onclick=async()=>{let email=prompt("Email address");if(!email)return;let pass=prompt("Create a password");if(!pass)return;try{let s=await authApi("signup",{email,password:pass});if(s.access_token){saveSession(s);await load();render()}else alert("Account created. Check your email to confirm.")}catch(err){alert(err.message)}}}}
 async function start(){let saved=localStorage.getItem("moneymap_session");if(saved){try{let s=JSON.parse(saved);token=s.access_token;user=s.user;await load();render();return}catch(e){clearSession()}}render()}
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 start().catch(e=>{root.innerHTML='<div class="auth"><div class="card"><div class="brand">Money<b>Map</b></div><h1>MoneyMap could not start</h1><p class="muted">'+esc(e.message)+'</p><button class="btn secondary" onclick="location.reload()">Reload</button></div></div>'});
 </script>
 </body>
