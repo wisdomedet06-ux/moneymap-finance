@@ -440,7 +440,9 @@ function savingsModal(id){
   $("save").onclick=async()=>{try{
     let name=$("sn").value.trim();if(!name)throw new Error("Enter a savings goal name.");
     let target=$("st").value?Number($("st").value):null,current=Number($("sc").value||0);
-    if(current<0)throw new Error("Current amount cannot be negative.");
+    if(target!==null&&(target<=0||!Number.isFinite(target)))throw new Error("Target amount must be greater than zero.");
+    if(!Number.isFinite(current)||current<0)throw new Error("Current amount cannot be negative.");
+    if(target!==null&&current>target)throw new Error("Current amount cannot exceed the target amount.");
     let payload={name,account_id:$("sa").value||null,target_amount:target,current_amount:current,target_date:$("sd").value||null,notes:$("snotes").value,status:s?.status||"active"};
     if(id)await api("savings_records?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify(payload)});
     else{payload.user_id=user.id;await api("savings_records",{method:"POST",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify(payload)})}
