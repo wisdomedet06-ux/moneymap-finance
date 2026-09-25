@@ -16,7 +16,7 @@ const SUPABASE_URL="https://mqtauhmzsjfjfcfqppdm.supabase.co";
 const KEY="sb_publishable_6YyswjIgsHpsu--SMVv2bA_TTtTp3MH";
 const root=document.getElementById("root"), modalEl=document.getElementById("modal");
 let token=null,user=null,view="dashboard",month=new Date(),txSearch="",txType="",txAccount="",txCategory="";
-let data={accounts:[],categories:[],transactions:[],budgets:[],goals:[],recurring:[],savings:[],savingsContributions:[],reportTransactions:[]};
+let data={accounts:[],categories:[],transactions:[],budgets:[],goals:[],recurring:[],savings:[],savingsContributions:[],debts:[],investments:[],netWorth:[],reportTransactions:[]};
 const $=id=>document.getElementById(id);
 const money=n=>new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",maximumFractionDigits:0}).format(Number(n)||0);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -49,6 +49,8 @@ async function load(){
   data.savings=await api("savings_records?select=*&order=created_at.desc")||[];
   data.savingsContributions=await api("savings_contributions?select=*&order=contribution_date.desc")||[];
   data.debts=await api("debts?select=*&order=created_at.desc")||[];
+  data.investments=await api("investments?select=*&order=valuation_date.desc")||[];
+  data.netWorth=await api("net_worth_snapshots?select=*&order=snapshot_date.desc")||[];
   data.reportTransactions=await reportRange(3);
 }
 function saveSession(s){token=s.access_token;user=s.user;localStorage.setItem("moneymap_session",JSON.stringify(s))}
@@ -57,9 +59,9 @@ function auth(){
 return '<div class="auth"><div class="card"><div class="brand">Money<b>Map</b></div><h1>Welcome back</h1><p class="muted">Your private personal finance space.</p><form id="authform"><label>Email</label><input id="email" type="email" required><label>Password</label><input id="pass" type="password" minlength="6" required><button class="btn primary" style="width:100%;margin-top:18px">Sign in</button><div id="authmsg" class="muted msg"></div></form><button class="btn secondary" id="signup" style="width:100%;margin-top:10px">Create an account</button></div></div>';
 }
 function app(){
-return '<div class="layout"><aside class="side"><div class="brand" style="padding:8px 12px 20px">Money<b>Map</b></div><nav class="nav">'+["dashboard","accounts","transactions","categories","budgets","goals","savings","debts","recurring","reports","data"].map(v=>'<button class="'+(view===v?"active":"")+'" onclick="go(&quot;'+v+'&quot;)">'+v[0].toUpperCase()+v.slice(1)+'</button>').join("")+'</nav><button class="btn secondary" style="margin:24px 12px;width:calc(100% - 24px)" onclick="logout()">Sign out</button></aside><main><div class="top"><div><div class="muted">'+greet()+'</div><h1>'+esc(user?.user_metadata?.full_name||"Christy")+'</h1></div><div><button class="btn secondary" onclick="changeMonth(-1)">‹</button> <b>'+month.toLocaleString("en-US",{month:"long",year:"numeric"})+'</b> <button class="btn secondary" onclick="changeMonth(1)">›</button></div></div>'+page()+'</main></div>';
+return '<div class="layout"><aside class="side"><div class="brand" style="padding:8px 12px 20px">Money<b>Map</b></div><nav class="nav">'+["dashboard","accounts","transactions","categories","budgets","goals","savings","debts","investments","networth","recurring","reports","data"].map(v=>'<button class="'+(view===v?"active":"")+'" onclick="go(&quot;'+v+'&quot;)">'+v[0].toUpperCase()+v.slice(1)+'</button>').join("")+'</nav><button class="btn secondary" style="margin:24px 12px;width:calc(100% - 24px)" onclick="logout()">Sign out</button></aside><main><div class="top"><div><div class="muted">'+greet()+'</div><h1>'+esc(user?.user_metadata?.full_name||"Christy")+'</h1></div><div><button class="btn secondary" onclick="changeMonth(-1)">‹</button> <b>'+month.toLocaleString("en-US",{month:"long",year:"numeric"})+'</b> <button class="btn secondary" onclick="changeMonth(1)">›</button></div></div>'+page()+'</main></div>';
 }
-function page(){if(view==="dashboard")return dashboard();if(view==="accounts")return accounts();if(view==="transactions")return transactions();if(view==="categories")return categories();if(view==="budgets")return budgets();if(view==="goals")return goals();if(view==="savings")return savings();if(view==="debts")return debts();if(view==="recurring")return recurring();if(view==="reports")return reports();return dataPage()}
+function page(){if(view==="dashboard")return dashboard();if(view==="accounts")return accounts();if(view==="transactions")return transactions();if(view==="categories")return categories();if(view==="budgets")return budgets();if(view==="goals")return goals();if(view==="savings")return savings();if(view==="debts")return debts();if(view==="investments")return investments();if(view==="networth")return networth();if(view==="recurring")return recurring();if(view==="reports")return reports();return dataPage()}
 function sum(type){return data.transactions.filter(t=>t.transaction_type===type&&t.status==="approved").reduce((a,t)=>a+Number(t.amount||0),0)}
 function metric(a,b){return '<section class="card metric"><span class="muted">'+a+'</span><strong>'+b+'</strong></section>'}
 function accountName(id){return data.accounts.find(a=>a.id===id)?.name||"Account"}
@@ -88,6 +90,25 @@ function debts(){
     return '<div class="card" style="padding:20px"><div class="row" style="padding-top:0"><div><h3 style="margin:0">'+esc(d.name)+'</h3><div class="muted">Monthly payment '+money(d.monthly_payment||0)+'</div></div><div><b>'+money(out)+'</b><div class="muted">Outstanding</div></div></div><div class="progress"><i style="width:'+pct+'%"></i></div><div class="muted" style="margin-top:7px">'+Math.round(pct)+'% paid down</div><div class="actions"><button class="btn primary" onclick="debtPaymentModal(&quot;'+d.id+'&quot;)">Record payment</button><button class="btn secondary" onclick="debtModal(&quot;'+d.id+'&quot;)">Edit</button></div></div>';
   }
   return '<div class="top"><div><h1>Debts</h1><div class="muted">Track outstanding balances and preserve payment history.</div></div><button class="btn primary" onclick="debtModal()">Add debt</button></div>'+(active.length?active.map(row).join(""):'<section class="card"><p class="muted">No debts recorded yet.</p></section>');
+}
+function investments(){
+  let rows=data.investments||[];
+  function row(i){
+    let invested=Number(i.invested_amount||0),value=Number(i.current_value||0),gain=value-invested,pct=invested?gain/invested*100:0;
+    return '<div class="row"><div><b>'+esc(i.name)+'</b><div class="muted">'+esc(i.investment_type||"Investment")+' · Valued '+esc(i.valuation_date||"")+'</div></div><div style="text-align:right"><b>'+money(value)+'</b><div class="muted">Invested '+money(invested)+' · '+(gain>=0?"+":"")+money(gain)+' ('+pct.toFixed(1)+'%)</div><div style="margin-top:5px"><button class="btn secondary" style="padding:5px 8px;font-size:12px" onclick="investmentModal(&quot;'+i.id+'&quot;)">Edit</button></div></div></div>';
+  }
+  let totalInvested=rows.reduce((a,i)=>a+Number(i.invested_amount||0),0),totalValue=rows.reduce((a,i)=>a+Number(i.current_value||0),0);
+  return '<div class="top"><div><h1>Investments</h1><div class="muted">Track invested capital and current valuations without a live market data service.</div></div><button class="btn primary" onclick="investmentModal()">Add investment</button></div><div class="grid2"><section class="card metric"><span class="muted">Invested</span><strong>'+money(totalInvested)+'</strong></section><section class="card metric"><span class="muted">Current value</span><strong>'+money(totalValue)+'</strong></section></div><section class="card section"><div class="list">'+(rows.length?rows.map(row).join(""):'<p class="muted">No investments recorded yet.</p>')+'</div></section>';
+}
+function networth(){
+  let rows=[...(data.netWorth||[])].sort((a,b)=>String(b.snapshot_date).localeCompare(String(a.snapshot_date)));
+  let latest=rows[0];
+  let assets=latest?Number(latest.assets||0):0,liabilities=latest?Number(latest.liabilities||0):0;
+  let derived=assets-liabilities;
+  let accountAssets=data.accounts.reduce((a,x)=>a+Number(x.opening_balance||0)+accountMovement(x.id),0);
+  let investmentAssets=data.investments.reduce((a,x)=>a+Number(x.current_value||0),0);
+  let debtLiabilities=data.debts.reduce((a,x)=>a+Number(x.outstanding_amount||0),0);
+  return '<div class="top"><div><h1>Net worth</h1><div class="muted">Monthly snapshots preserve your financial position over time.</div></div><button class="btn primary" onclick="netWorthModal()">Add snapshot</button></div><div class="grid4">'+metric("Current account assets",money(accountAssets))+metric("Investments",money(investmentAssets))+metric("Debt liabilities",money(debtLiabilities))+metric("Latest snapshot",money(derived))+'</div><section class="card section"><h2>Net worth history</h2><div class="list">'+(rows.length?rows.map(r=>'<div class="row"><div><b>'+esc(r.snapshot_date)+'</b><div class="muted">Assets '+money(r.assets)+' · Liabilities '+money(r.liabilities)+'</div></div><b>'+money(r.net_worth)+'</b></div>').join(""):'<p class="muted">No net worth snapshots yet.</p>')+'</div></section>';
 }
 function recurring(){
   let active=data.recurring.filter(r=>r.active!==false);
@@ -169,6 +190,28 @@ function debtPaymentModal(id){
     await api("debt_payments",{method:"POST",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify({debt_id:id,user_id:user.id,amount,payment_date:$("dpd").value,notes:$("dpn").value})});
     let remaining=Math.max(0,Number(d.outstanding_amount||0)-amount);
     await api("debts?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify({outstanding_amount:remaining})});
+    closeModal();await load();render();
+  }catch(e){alert(e.message)}}
+}
+function netWorthModal(){
+  let suggestedAssets=data.accounts.reduce((a,x)=>a+Number(x.opening_balance||0)+accountMovement(x.id),0)+data.investments.reduce((a,x)=>a+Number(x.current_value||0),0)+data.savings.reduce((a,x)=>a+Number(x.current_amount||0),0);
+  let suggestedLiabilities=data.debts.reduce((a,x)=>a+Number(x.outstanding_amount||0),0);
+  modal("Add net worth snapshot",'<p class="muted">Use the balances you want included in this monthly snapshot. The net worth value is calculated from assets minus liabilities.</p><label>Snapshot date</label><input id="nwd" type="date" value="'+new Date().toISOString().slice(0,10)+'"><label>Total assets</label><input id="nwa" type="number" step="0.01" value="'+suggestedAssets+'"><label>Total liabilities</label><input id="nwl" type="number" step="0.01" value="'+suggestedLiabilities+'">');
+  $("save").onclick=async()=>{try{
+    let assets=Number($("nwa").value),liabilities=Number($("nwl").value);if(assets<0||liabilities<0)throw new Error("Assets and liabilities cannot be negative.");
+    await api("net_worth_snapshots",{method:"POST",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify({user_id:user.id,snapshot_date:$("nwd").value,assets,liabilities,net_worth:assets-liabilities})});
+    closeModal();await load();render();
+  }catch(e){alert(e.message)}}
+}
+function investmentModal(id){
+  let i=id?(data.investments||[]).find(x=>x.id===id):null;
+  modal(id?"Edit investment":"Add investment",'<label>Name</label><input id="in" value="'+esc(i?.name||"")+'"><label>Investment type</label><input id="it" value="'+esc(i?.investment_type||"")+'" placeholder="Stocks, bonds, fund, property"><label>Invested amount</label><input id="ia" type="number" step="0.01" value="'+(i?.invested_amount??"")+'"><label>Current value</label><input id="iv" type="number" step="0.01" value="'+(i?.current_value??"")+'"><label>Valuation date</label><input id="idate" type="date" value="'+(i?.valuation_date||new Date().toISOString().slice(0,10))+'">');
+  $("save").onclick=async()=>{try{
+    let name=$("in").value.trim(),invested=Number($("ia").value),value=Number($("iv").value);
+    if(!name)throw new Error("Enter an investment name.");if(invested<0||value<0)throw new Error("Investment amounts cannot be negative.");
+    let payload={name,investment_type:$("it").value.trim()||"Other",invested_amount:invested,current_value:value,valuation_date:$("idate").value};
+    if(id)await api("investments?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify(payload)});
+    else{payload.user_id=user.id;await api("investments",{method:"POST",headers:{"Prefer":"return=minimal","Content-Profile":"moneymap"},body:JSON.stringify(payload)})}
     closeModal();await load();render();
   }catch(e){alert(e.message)}}
 }
