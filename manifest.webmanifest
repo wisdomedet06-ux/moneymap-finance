@@ -1,0 +1,13 @@
+{
+  "name": "MoneyMap | Christy's Personal Finance Tracker",
+  "short_name": "MoneyMap",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf7f2",
+  "theme_color": "#faf7f2",
+  "description": "A private personal finance tracker for income, spending, savings, goals, debts, investments and net worth.",
+  "icons": [
+    {"src":"icon-192.svg","sizes":"192x192","type":"image/svg+xml","purpose":"any maskable"},
+    {"src":"icon-512.svg","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
