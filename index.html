@@ -159,6 +159,30 @@ tbody tr:hover{background:#fdfaf6}
   table{min-width:620px}
   .modal .card{padding:18px}
 }
+ 
+/* Warm dark mode */
+body.dark-mode{--bg:#211e1b;--card:#2b2723;--text:#f2e9df;--muted:#b9aea4;--line:#443d37;--soft:#49352f;--soft-2:#38312c;--sage-soft:#334034;background-image:linear-gradient(180deg,#25211e 0%,#1e1b19 100%)}
+body.dark-mode .side{background:#26221f;border-color:var(--line)}
+body.dark-mode .card{background:var(--card);border-color:var(--line);box-shadow:0 8px 28px #00000020}
+body.dark-mode .metric{background:#302b27}
+body.dark-mode input,body.dark-mode select{background:#25211e;color:var(--text);border-color:#504740}
+body.dark-mode input::placeholder{color:#847a72}
+body.dark-mode .secondary{background:#39332e;color:var(--text);border-color:#504740}
+body.dark-mode .secondary:hover{background:#463e38}
+body.dark-mode .nav button{color:#cfc3b9}
+body.dark-mode .nav button.active{background:#49352f;color:#fff1e7}
+body.dark-mode .nav button:hover{background:#38312c;color:#fff1e7}
+body.dark-mode th{background:#25211e;color:#b9aea4}
+body.dark-mode tbody tr:hover{background:#332e29}
+body.dark-mode .pill{background:#39332e;color:#d9cec4}
+body.dark-mode .progress{background:#403932}
+body.dark-mode .modal{background:#00000088}
+body.dark-mode .dashboard-hero{background:linear-gradient(135deg,#302a26 0%,#49352f 100%);border-color:#55463e}
+body.dark-mode .empty-state{background:#28231f;border-color:#51473f}
+body.dark-mode .mobile-nav select{background:#302a26;color:var(--text);border-color:#504740}
+.theme-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 12px 8px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:var(--soft-2);color:var(--text);cursor:pointer;font-weight:750}
+.theme-toggle span:last-child{font-size:12px;color:var(--muted);font-weight:700}
+@media(max-width:800px){.theme-toggle{margin:8px 8px 0}}
 </style>
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#faf7f2"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"></head>
 <body>
@@ -210,11 +234,13 @@ async function load(){
 }
 function saveSession(s){token=s.access_token;user=s.user;localStorage.setItem("moneymap_session",JSON.stringify(s))}
 function clearSession(){token=null;user=null;localStorage.removeItem("moneymap_session")}
+function applyTheme(theme){let dark=theme==="dark";document.body.classList.toggle("dark-mode",dark);localStorage.setItem("moneymap_theme",dark?"dark":"light");let icon=document.getElementById("themeIcon"),label=document.getElementById("themeLabel");if(icon)icon.textContent=dark?"☀":"☾";if(label)label.textContent=dark?"Light mode":"Dark mode"}
+function toggleTheme(){applyTheme(document.body.classList.contains("dark-mode")?"light":"dark")}
 function auth(){
 return '<div class="auth"><div class="card"><div class="brand">Money<b>Map</b></div><h1>Welcome back</h1><p class="muted">Your private personal finance space.</p><form id="authform"><label>Email</label><input id="email" type="email" required><label>Password</label><input id="pass" type="password" minlength="6" required><button class="btn primary" style="width:100%;margin-top:18px">Sign in</button><div id="authmsg" class="muted msg"></div></form><button class="btn secondary" id="signup" style="width:100%;margin-top:10px">Create an account</button></div></div>';
 }
 function app(){
-return '<div class="layout"><aside class="side"><div class="brand" style="padding:8px 12px 20px">Money<b>Map</b></div><nav class="nav">'+["dashboard","accounts","transactions","categories","budgets","goals","savings","debts","investments","networth","recurring","calendar","comparisons","reports","customreports","analytics","insights","data"].map(v=>'<button class="'+(view===v?"active":"")+'" onclick="go(&quot;'+v+'&quot;)">'+v[0].toUpperCase()+v.slice(1)+'</button>').join("")+'</nav><div class="mobile-nav"><label for="mobileView">Go to</label><select id="mobileView" onchange="go(this.value)">'+["dashboard","accounts","transactions","categories","budgets","goals","savings","debts","investments","networth","recurring","calendar","comparisons","reports","customreports","analytics","insights","data"].map(v=>'<option value="'+v+'" '+(view===v?"selected":"")+'>'+({transactions:"Transactions",customreports:"Custom reports",networth:"Net worth",data:"Data & backup"}[v]||v[0].toUpperCase()+v.slice(1))+'</option>').join("")+'</select></div><button class="btn secondary" style="margin:24px 12px;width:calc(100% - 24px)" onclick="logout()">Sign out</button></aside><main><div class="top"><div><div class="muted">'+greet()+'</div><h1>'+esc(user?.user_metadata?.full_name||"Christy")+'</h1></div><div><button class="btn secondary" onclick="changeMonth(-1)">‹</button> <b>'+month.toLocaleString("en-US",{month:"long",year:"numeric"})+'</b> <button class="btn secondary" onclick="changeMonth(1)">›</button></div></div>'+page()+'</main></div>';
+return '<div class="layout"><aside class="side"><div class="brand" style="padding:8px 12px 20px">Money<b>Map</b></div><nav class="nav">'+["dashboard","accounts","transactions","categories","budgets","goals","savings","debts","investments","networth","recurring","calendar","comparisons","reports","customreports","analytics","insights","data"].map(v=>'<button class="'+(view===v?"active":"")+'" onclick="go(&quot;'+v+'&quot;)">'+v[0].toUpperCase()+v.slice(1)+'</button>').join("")+'</nav><div class="mobile-nav"><label for="mobileView">Go to</label><select id="mobileView" onchange="go(this.value)">'+["dashboard","accounts","transactions","categories","budgets","goals","savings","debts","investments","networth","recurring","calendar","comparisons","reports","customreports","analytics","insights","data"].map(v=>'<option value="'+v+'" '+(view===v?"selected":"")+'>'+({transactions:"Transactions",customreports:"Custom reports",networth:"Net worth",data:"Data & backup"}[v]||v[0].toUpperCase()+v.slice(1))+'</option>').join("")+'</select></div><button class="theme-toggle" onclick="toggleTheme()" type="button"><span id="themeIcon">☾</span><span id="themeLabel">Dark mode</span></button><button class="btn secondary" style="margin:24px 12px;width:calc(100% - 24px)" onclick="logout()">Sign out</button></aside><main><div class="top"><div><div class="muted">'+greet()+'</div><h1>'+esc(user?.user_metadata?.full_name||"Christy")+'</h1></div><div><button class="btn secondary" onclick="changeMonth(-1)">‹</button> <b>'+month.toLocaleString("en-US",{month:"long",year:"numeric"})+'</b> <button class="btn secondary" onclick="changeMonth(1)">›</button></div></div>'+page()+'</main></div>';
 }
 function page(){if(view==="dashboard")return dashboard();if(view==="accounts")return accounts();if(view==="transactions")return transactions();if(view==="categories")return categories();if(view==="budgets")return budgets();if(view==="goals")return goals();if(view==="savings")return savings();if(view==="debts")return debts();if(view==="investments")return investments();if(view==="networth")return networth();if(view==="recurring")return recurring();if(view==="calendar")return calendarPage();if(view==="comparisons")return comparisons();if(view==="reports")return reports();if(view==="customreports")return customReports();if(view==="analytics")return analyticsPage();if(view==="insights")return insightsPage();return dataPage()}
 function sum(type){return data.transactions.filter(t=>t.transaction_type===type&&t.status==="approved").reduce((a,t)=>a+Number(t.amount||0),0)}
@@ -602,7 +628,7 @@ function go(v){view=v;render()}
 async function changeMonth(n){month=new Date(month.getFullYear(),month.getMonth()+n,1);try{await load();render()}catch(e){alert(e.message)}}
 async function logout(){clearSession();render()}
 function render(){root.innerHTML=user?app():auth();if(!user){$("authform").onsubmit=async e=>{e.preventDefault();$("authmsg").textContent="Signing in...";try{let s=await authApi("token?grant_type=password",{email:$("email").value,password:$("pass").value});saveSession(s);await load();render()}catch(err){$("authmsg").textContent=err.message}};$("signup").onclick=async()=>{let email=prompt("Email address");if(!email)return;let pass=prompt("Create a password");if(!pass)return;try{let s=await authApi("signup",{email,password:pass});if(s.access_token){saveSession(s);await load();render()}else alert("Account created. Check your email to confirm.")}catch(err){alert(err.message)}}}}
-async function start(){let saved=localStorage.getItem("moneymap_session");if(saved){try{let s=JSON.parse(saved);token=s.access_token;user=s.user;await load();render();return}catch(e){clearSession()}}render()}
+async function start(){applyTheme(localStorage.getItem("moneymap_theme")||"light");let saved=localStorage.getItem("moneymap_session");if(saved){try{let s=JSON.parse(saved);token=s.access_token;user=s.user;await load();render();return}catch(e){clearSession()}}render()}
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 start().catch(e=>{root.innerHTML='<div class="auth"><div class="card"><div class="brand">Money<b>Map</b></div><h1>MoneyMap could not start</h1><p class="muted">'+esc(e.message)+'</p><button class="btn secondary" onclick="location.reload()">Reload</button></div></div>'});
 </script>
