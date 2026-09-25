@@ -184,7 +184,82 @@ body.dark-mode .mobile-nav select{background:#302a26;color:var(--text);border-co
 .theme-toggle span:last-child{font-size:12px;color:var(--muted);font-weight:700}
 @media(max-width:1100px){.theme-toggle{margin:8px 8px 0}}
 .mobile-menu-btn{display:none}.mobile-menu-panel{display:none}.mobile-theme-btn{display:none}@media(max-width:1100px){.mobile-nav{display:block;position:sticky;top:0;z-index:50;margin:-8px -8px 18px;padding:8px;background:var(--bg);border-bottom:1px solid var(--line)}.mobile-menu-btn{display:flex;width:100%;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);box-shadow:0 4px 14px #392a1f0a;font-size:15px}.mobile-menu-btn span:first-child{font-size:21px}.mobile-menu-btn b{flex:1;text-align:left;font-size:16px}#mobileMenuChevron{font-size:18px;color:var(--muted)}.mobile-menu-panel{display:none;max-height:calc(100vh - 80px);overflow:auto;margin-top:8px;padding:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 35px #29272418}.mobile-menu-panel.open{display:grid;grid-template-columns:1fr 1fr;gap:4px}.mobile-menu-panel button{border:0;background:transparent;color:var(--text);text-align:left;padding:11px 10px;border-radius:9px;font-size:13px;font-weight:700}.mobile-menu-panel button.active{background:var(--soft)}.mobile-theme-btn{display:flex;width:100%;align-items:center;gap:8px;margin-top:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--soft-2);color:var(--text);font-weight:750}.mobile-nav-signout{display:block!important;margin-top:8px}.mobile-nav-signout .btn{width:100%}.side>.nav,.side>.theme-toggle,.side>.btn{display:none}body.mobile-menu-open{overflow:hidden}}@media(min-width:1101px){.mobile-nav-signout{display:none}}.setup-card{margin-bottom:18px}.setup-list{display:grid;gap:4px}.setup-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}.setup-item:last-child{border-bottom:0}.setup-check{width:24px;text-align:center;font-size:18px}.setup-item>div{flex:1;min-width:0}.setup-item .action-link{margin-left:auto}@media(max-width:1100px){.setup-item{align-items:flex-start}.setup-item .action-link{padding-top:2px}}.mobile-fab{display:none}@media(max-width:1100px){.mobile-fab{display:block;position:fixed;right:16px;bottom:16px;z-index:40;border:0;border-radius:999px;padding:13px 17px;background:var(--terra);color:#fff;font-weight:800;box-shadow:0 8px 24px #29272425}}.settings-fab{position:fixed;right:22px;bottom:22px;width:46px;height:46px;border:1px solid var(--line);border-radius:50%;background:var(--card);color:var(--text);font-size:22px;line-height:1;box-shadow:0 8px 22px #29272418;z-index:45;cursor:pointer}.settings-fab:hover{background:var(--soft)}@media(max-width:1100px){.settings-fab{right:16px;bottom:76px;width:44px;height:44px}}</style>
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#f7e7ee"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"></head>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#f7e7ee"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><style>
+body:not(.dark-mode){
+  --bg:#DA027F;
+  --card:#DA027F;
+  --text:#fff;
+  --muted:#fff;
+  --line:rgba(255,255,255,.32);
+  --terra:#fff;
+  --terra-dark:#fff;
+  --sage:#fff;
+  --sage-soft:rgba(255,255,255,.14);
+  --soft:rgba(255,255,255,.16);
+  --soft-2:rgba(255,255,255,.10);
+  --white:#fff;
+  background:#DA027F!important;
+  background-image:none!important;
+  color:#fff!important;
+}
+body:not(.dark-mode) .side,
+body:not(.dark-mode) .card,
+body:not(.dark-mode) .metric,
+body:not(.dark-mode) .dashboard-hero,
+body:not(.dark-mode) .empty,
+body:not(.dark-mode) .modal-card,
+body:not(.dark-mode) .table-wrap,
+body:not(.dark-mode) .panel,
+body:not(.dark-mode) .section-card,
+body:not(.dark-mode) .list,
+body:not(.dark-mode) .nav,
+body:not(.dark-mode) .mobile-nav{
+  background:#DA027F!important;
+  color:#fff!important;
+  border-color:rgba(255,255,255,.32)!important;
+}
+body:not(.dark-mode) input,
+body:not(.dark-mode) select,
+body:not(.dark-mode) textarea{
+  background:#DA027F!important;
+  color:#fff!important;
+  border-color:rgba(255,255,255,.5)!important;
+}
+body:not(.dark-mode) input::placeholder,
+body:not(.dark-mode) textarea::placeholder{color:rgba(255,255,255,.75)!important}
+body:not(.dark-mode) h1,
+body:not(.dark-mode) h2,
+body:not(.dark-mode) h3,
+body:not(.dark-mode) h4,
+body:not(.dark-mode) p,
+body:not(.dark-mode) span,
+body:not(.dark-mode) label,
+body:not(.dark-mode) td,
+body:not(.dark-mode) th,
+body:not(.dark-mode) small,
+body:not(.dark-mode) .muted,
+body:not(.dark-mode) .eyebrow,
+body:not(.dark-mode) .page-subtitle,
+body:not(.dark-mode) .nav button{
+  color:#fff!important;
+}
+body:not(.dark-mode) th{background:#DA027F!important}
+body:not(.dark-mode) .nav button.active,
+body:not(.dark-mode) .nav button:hover,
+body:not(.dark-mode) .secondary,
+body:not(.dark-mode) .pill,
+body:not(.dark-mode) .progress{
+  background:rgba(255,255,255,.16)!important;
+  color:#fff!important;
+  border-color:rgba(255,255,255,.32)!important;
+}
+body:not(.dark-mode) .primary,
+body:not(.dark-mode) button{
+  color:#fff!important;
+}
+body:not(.dark-mode) .progress > div{background:#fff!important}
+body:not(.dark-mode) a{color:#fff!important}
+</style></head>
 <body>
 <div id="root"></div><div id="modal"></div>
 <script>
